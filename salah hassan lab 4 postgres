@@ -1,0 +1,168 @@
+ ---------------------LAB 4
+ --1. Create a multiply function that accepts two numbers and returns their
+--product.
+--الدالة دي بتاخد رقمين وترجع حاصل ضربهم
+CREATE FUNCTION multiple (a INT, b INT) RETURNS INT AS $$
+BEGIN
+  RETURN a * b;
+END; $$ LANGUAGE plpgsql;
+
+-- تجربة الدالة 
+select multiple (2,4) as result_fun;
+
+
+
+--2. Create a hello_world function that takes a name as input and returns a
+--personalized welcome message for that name
+CREATE  FUNCTION massage1(yourname TEXT) RETURNS TEXT AS $$
+BEGIN
+  RETURN 'Welcome ' || yourname ;
+END; $$ LANGUAGE plpgsql;
+select massage1 (' salah') ;
+
+
+
+--3. Create a function that accepts a number and determines whether it is
+--odd or even.
+CREATE FUNCTION type_number(x int) returns text as 
+$$
+begin if x % 2 =0 then return 'even';
+else return 'odd';
+end if;
+end;
+$$ LANGUAGE plpgsql;
+
+select type_number(5);
+
+
+
+4-- Create a function that takes a Student ID as input and retrieves all
+--information related to that student
+CREATE  FUNCTION student_info(student_id int)
+RETURNS TABLE (
+ st_id int  ,
+name varchar(20),
+gender varchar(1) ,
+birth_date date ,
+track_id int 
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    student.st_id,
+    student.name,
+    student.gender,
+    student.birth_date,
+    student.track_id
+  FROM student
+  WHERE student.st_id = student_id;
+END;
+$$ LANGUAGE plpgsql;
+select student_info(1);
+select * from student;
+
+
+--5. Implement a function that takes the name of a subject and calculates
+--the average grades for that subject
+CREATE FUNCTION average_grade2(sub_name TEXT)
+RETURNS numeric AS $$
+DECLARE
+  avg_grade numeric;
+BEGIN
+  SELECT AVG(grades.grade)
+  INTO avg_grade
+  FROM subject
+  JOIN grades ON grades.sub_id = subject.id
+  WHERE subject.name = sub_name;
+
+  RETURN avg_grade;
+END;
+$$ LANGUAGE plpgsql;
+
+-- استدعاء الدالة
+SELECT average_grade1('programming');
+
+
+
+
+
+--7. Create a trigger to monitor changes made to the student table,
+--including additions, updates, and deletions. This trigger will record
+--the time of each action and provide a description of the action in
+--another table.
+CREATE TABLE student_edit (
+  log_id SERIAL PRIMARY KEY,
+  student_id INT,
+  action_type TEXT,
+  action_time TIMESTAMP,
+  description TEXT);
+
+CREATE  FUNCTION student_log()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO student_edit (student_id, action_type, description)
+    VALUES (NEW.id, 'INSERT', 'New student added');
+
+  ELSIF TG_OP = 'UPDATE' THEN
+    INSERT INTO student_edit (student_id, action_type, description)
+    VALUES (NEW.id, 'UPDATE', 'Student record updated');
+
+  ELSIF TG_OP = 'DELETE' THEN
+    INSERT INTO student_edit (student_id, action_type, description)
+    VALUES (OLD.id, 'DELETE', 'Student record deleted');
+  END IF;
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER student_changes
+AFTER INSERT OR UPDATE OR DELETE ON student
+FOR EACH ROW
+EXECUTE FUNCTION student_log();
+
+
+UPDATE student SET name = 'Kareem' WHERE st_id = 1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
